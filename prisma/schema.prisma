@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  password     String
+  role           String       @default("student")
+  inviteStatus   String       @default("invited")
+  passwordChanged Boolean     @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  assignments   Assignment[]
+  submissions   Submission[]
+  notifications Notification[]
+}
+
+model Assignment {
+  id             String       @id @default(uuid())
+  title          String
+  description    String
+  deadline       DateTime
+  requirementsPDF String?
+  maxFileSize    Int          @default(10)
+  status         String       @default("active")
+  createdById    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  submissions    Submission[]
+}
+
+model Submission {
+  id           String   @id @default(uuid())
+  studentId    String
+  assignmentId String
+  zipFile      String
+  submittedAt  DateTime @default(now())
+  status       String   @default("submitted")
+  student      User     @relation(fields: [studentId], references: [id])
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  grade        Grade?
+}
+
+model Grade {
+  id              String     @id @default(uuid())
+  submissionId    String     @unique
+  totalScore      Int?
+  codeQuality     Int?
+  structure       Int?
+  requirementsMet Int?
+  bestPractices   Int?
+  noErrors        Int?
+  gradedAt        DateTime   @default(now())
+  submission      Submission @relation(fields: [submissionId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
