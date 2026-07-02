@@ -70,14 +70,14 @@ export default function SubmissionCheckPage({ params }) {
   const handleDownload = async () => {
     if (!submission?.zipFile) return;
     try {
-      const res = await fetch(`/api/download?path=${encodeURIComponent(submission.zipFile)}`, {
+      const studentName = submission?.student?.name || "submission";
+      const res = await fetch(`/api/download?url=${encodeURIComponent(submission.zipFile)}&filename=${encodeURIComponent(studentName)}.zip`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const studentName = submission?.student?.name || "submission";
       a.href = url;
       a.download = `${studentName}.zip`;
       document.body.appendChild(a);

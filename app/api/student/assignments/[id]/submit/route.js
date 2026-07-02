@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
+import { uploadFile } from "@/lib/cloudinary";
 import { notifyAdmin } from "@/lib/notifications";
 
 export async function POST(request, { params }) {
@@ -13,9 +12,7 @@ export async function POST(request, { params }) {
 
   const { id } = await params;
 
-  const assignment = await prisma.assignment.findUnique({
-    where: { id },
-  });
+  const assignment = await prisma.assignment.findUnique({ where: { id } });
 
   if (!assignment || assignment.status !== "active") {
     return NextResponse.json({ error: "Assignment not found or closed" }, { status: 404 });
@@ -37,19 +34,20 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `File exceeds ${assignment.maxFileSize}MB limit` }, { status: 400 });
   }
 
-  const uploadsDir = path.join(process.cwd(), "uploads");
-  await mkdir(uploadsDir, { recursive: true });
-
-  const fileName = `${user.id}_${id}_${Date.now()}.zip`;
-  const filePath = path.join(uploadsDir, fileName);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filePath, buffer);
+
+  let uploadResult;
+  try {
+    uploadResult = await uploadFile(buffer, `${user.id}_${id}_${Date.now()}.zip`);
+  } catch {
+    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+  }
 
   const submission = await prisma.submission.create({
     data: {
       studentId: user.id,
       assignmentId: id,
-      zipFile: `/uploads/${fileName}`,
+      zipFile: uploadResult.secure_url,
     },
   });
 

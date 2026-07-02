@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { verifyAuth } from "@/lib/auth";
 
 export async function GET(request) {
@@ -10,26 +8,28 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const filePath = searchParams.get("path");
+  const url = searchParams.get("url");
+  const filename = searchParams.get("filename") || "download.zip";
 
-  if (!filePath) {
-    return NextResponse.json({ error: "File path required" }, { status: 400 });
+  if (!url) {
+    return NextResponse.json({ error: "URL required" }, { status: 400 });
   }
 
-  const fullPath = path.join(process.cwd(), filePath);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
 
-  if (!fs.existsSync(fullPath)) {
-    return NextResponse.json({ error: "File not found" }, { status: 404 });
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": buffer.length.toString(),
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch file" }, { status: 500 });
   }
-
-  const buffer = fs.readFileSync(fullPath);
-  const fileName = path.basename(filePath);
-
-  return new NextResponse(buffer, {
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
-      "Content-Length": buffer.length.toString(),
-    },
-  });
 }

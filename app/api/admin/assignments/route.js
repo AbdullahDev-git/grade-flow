@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdmin } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { uploadFile } from "@/lib/cloudinary";
 import { notifyAllStudents } from "@/lib/notifications";
 
 export async function GET(request) {
@@ -57,13 +56,9 @@ export async function POST(request) {
     let requirementsPDF = null;
 
     if (pdfFile && pdfFile instanceof File) {
-      const uploadsDir = path.join(process.cwd(), "uploads");
-      await mkdir(uploadsDir, { recursive: true });
-      const ext = pdfFile.name.split(".").pop();
-      const filename = `requirements-${Date.now()}.${ext}`;
       const buffer = Buffer.from(await pdfFile.arrayBuffer());
-      await writeFile(path.join(uploadsDir, filename), buffer);
-      requirementsPDF = `/uploads/${filename}`;
+      const result = await uploadFile(buffer, `requirements-${Date.now()}.pdf`);
+      requirementsPDF = result.secure_url;
     }
 
     const assignment = await prisma.assignment.create({
