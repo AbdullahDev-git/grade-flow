@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Edit2, Loader2, AlertCircle } from "lucide-react";
 import StatsCard from "@/components/admin/StatsCard";
 import StatusBadge from "@/components/admin/StatusBadge";
-import SystemHealthCard from "@/components/admin/SystemHealthCard";
+
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -64,13 +64,6 @@ export default function DashboardPage() {
     { icon: "👨‍🎓", number: data.activeStudents ?? "—", label: "Active Students", color: "success" },
   ];
 
-  const systemHealth = {
-    serverLoad: 82,
-    dbSync: "Active",
-    uptime: "99.9%",
-    lastBackup: "Today, 2:30 AM",
-  };
-
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -95,8 +88,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-card rounded-xl shadow-sm border border-border p-5">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-5">
           <h2 className="text-lg font-semibold text-text-primary mb-4">Recent Submissions</h2>
           {data.recentSubmissions.length === 0 ? (
             <p className="text-text-secondary text-sm py-8 text-center">No submissions yet</p>
@@ -143,23 +135,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        <div>
-          <SystemHealthCard health={systemHealth} />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-4 bg-card rounded-xl shadow-sm border border-border p-5"
-          >
-            <div className="text-3xl mb-2">💡</div>
-            <p className="text-sm text-text-secondary italic leading-relaxed">
-              &ldquo;Clarity is the ultimate sophistication. Our goal is to make academic administration feel like a calm, guided experience.&rdquo;
-              — System Architects, Design Philosophy Dept.
-            </p>
-          </motion.div>
-        </div>
-      </div>
     </div>
   );
 }
