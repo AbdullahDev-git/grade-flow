@@ -5,43 +5,48 @@ import { uploadFile } from "@/lib/cloudinary";
 import { notifyAllStudents } from "@/lib/notifications";
 
 export async function GET(request) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const assignments = await prisma.assignment.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { submissions: true } },
+      },
+    });
+
+    const totalStudents = await prisma.user.count({
+      where: { role: "student" },
+    });
+
+    const result = assignments.map((a) => ({
+      id: a.id,
+      title: a.title,
+      description: a.description,
+      deadline: a.deadline,
+      status: a.status,
+      maxFileSize: a.maxFileSize,
+      submissions: a._count.submissions,
+      totalStudents,
+    }));
+
+    return NextResponse.json({ assignments: result });
+  } catch (error) {
+    console.error("Admin assignments GET error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const assignments = await prisma.assignment.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { submissions: true } },
-    },
-  });
-
-  const totalStudents = await prisma.user.count({
-    where: { role: "student" },
-  });
-
-  const result = assignments.map((a) => ({
-    id: a.id,
-    title: a.title,
-    description: a.description,
-    deadline: a.deadline,
-    status: a.status,
-    maxFileSize: a.maxFileSize,
-    submissions: a._count.submissions,
-    totalStudents,
-  }));
-
-  return NextResponse.json({ assignments: result });
 }
 
 export async function POST(request) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const title = formData.get("title");
     const description = formData.get("description");
@@ -55,7 +60,7 @@ export async function POST(request) {
 
     let requirementsPDF = null;
 
-    if (pdfFile && pdfFile instanceof File) {
+    if (pdfFile && pdfFile.arrayBuffer) {
       const buffer = Buffer.from(await pdfFile.arrayBuffer());
       const result = await uploadFile(buffer, `requirements-${Date.now()}.pdf`);
       requirementsPDF = result.secure_url;
@@ -80,24 +85,30 @@ export async function POST(request) {
 
     return NextResponse.json({ assignment });
   } catch (error) {
+    console.error("Admin assignments POST error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function DELETE(request) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-
-  if (!id) {
-    return NextResponse.json({ error: "Assignment ID required" }, { status: 400 });
-  }
-
   try {
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Assignment ID required" }, { status: 400 });
+    }
+
+    const existing = await prisma.assignment.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    }
+
     await prisma.grade.deleteMany({
       where: { submission: { assignmentId: id } },
     });
@@ -106,6 +117,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete assignment" }, { status: 500 });
+    console.error("Admin assignments DELETE error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
