@@ -10,6 +10,15 @@ import Toast from "@/components/admin/Toast";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import ErrorPopover from "@/components/admin/ErrorPopover";
 
+const COURSES = [
+  { value: "fullstack", label: "Full Stack Development" },
+  { value: "wordpress", label: "WordPress Development" },
+  { value: "uiux", label: "UI/UX Design" },
+  { value: "ai-chatbot", label: "AI Chatbot Development" },
+];
+
+const COURSE_LABELS = Object.fromEntries(COURSES.map(c => [c.value, c.label]));
+
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
   return {
@@ -32,6 +41,7 @@ export default function AssignmentsPage() {
     title: "",
     description: "",
     deadline: "",
+    course: "fullstack",
     maxFileSize: 25,
     requirements: null,
   });
@@ -59,8 +69,8 @@ export default function AssignmentsPage() {
   const hideErr = () => setErrPop({ visible: false, message: "" });
 
   const handlePublish = async () => {
-    if (!form.title || !form.deadline) {
-      showErr("Title and deadline are required");
+    if (!form.title || !form.deadline || !form.course) {
+      showErr("Title, course, and deadline are required");
       return;
     }
 
@@ -70,6 +80,7 @@ export default function AssignmentsPage() {
       body.append("title", form.title);
       body.append("description", form.description);
       body.append("deadline", form.deadline);
+      body.append("course", form.course);
       body.append("maxFileSize", String(form.maxFileSize));
       if (form.requirements) body.append("requirementsPDF", form.requirements);
 
@@ -85,7 +96,7 @@ export default function AssignmentsPage() {
         return;
       }
 
-      setForm({ title: "", description: "", deadline: "", maxFileSize: 25, requirements: null });
+      setForm({ title: "", description: "", deadline: "", course: "fullstack", maxFileSize: 25, requirements: null });
       setShowForm(false);
       showToast("Assignment published successfully!");
       await fetchAssignments();
@@ -121,6 +132,15 @@ export default function AssignmentsPage() {
 
   const columns = [
     { key: "title", label: "Title" },
+    {
+      key: "course",
+      label: "Course",
+      render: (val) => (
+        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+          {COURSE_LABELS[val] || val}
+        </span>
+      ),
+    },
     {
       key: "deadline",
       label: "Deadline",
@@ -223,6 +243,19 @@ export default function AssignmentsPage() {
                     placeholder="Detailed instructions for students..."
                     className="w-full resize-none"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Course</label>
+                  <select
+                    value={form.course}
+                    onChange={(e) => setForm({ ...form, course: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                    required
+                  >
+                    {COURSES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1">Deadline</label>

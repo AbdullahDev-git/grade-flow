@@ -11,7 +11,7 @@ export async function GET(request) {
 
     const student = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, course: true },
     });
 
     if (!student) {
@@ -19,7 +19,7 @@ export async function GET(request) {
     }
 
     const totalAssignments = await prisma.assignment.count({
-      where: { status: "active" },
+      where: { status: "active", course: student.course },
     });
 
     const submissions = await prisma.submission.findMany({
@@ -34,6 +34,7 @@ export async function GET(request) {
     const pendingAssignments = await prisma.assignment.findMany({
       where: {
         status: "active",
+        course: student.course,
         deadline: { gte: now },
         ...(submittedIds.length > 0 ? { id: { notIn: submittedIds } } : {}),
       },
@@ -44,6 +45,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       name: student.name,
+      course: student.course,
       totalAssignments,
       pendingCount: pendingAssignments.length,
       recentPending: recentPending

@@ -6,6 +6,13 @@ import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle, User } from "lucide-react";
 import ErrorPopover from "@/components/admin/ErrorPopover";
 
+const COURSES = [
+  { value: "fullstack", label: "Full Stack Development" },
+  { value: "wordpress", label: "WordPress Development" },
+  { value: "uiux", label: "UI/UX Design" },
+  { value: "ai-chatbot", label: "AI Chatbot Development" },
+];
+
 function SetupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -14,6 +21,7 @@ function SetupForm() {
   const [name, setName] = useState(email.split("@")[0]);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [course, setCourse] = useState("fullstack");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -41,7 +49,7 @@ function SetupForm() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role: "student" }),
+        body: JSON.stringify({ name, email, password, role: "student", course }),
       });
 
       const data = await res.json();
@@ -113,6 +121,20 @@ function SetupForm() {
                 required
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1.5">Select Your Course</label>
+            <select
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+              required
+            >
+              {COURSES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
           </div>
 
           <div>

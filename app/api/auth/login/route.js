@@ -30,6 +30,7 @@ export async function POST(request) {
         name: user.name,
         email: user.email,
         role: user.role,
+        course: user.course,
         inviteStatus: user.inviteStatus,
       },
     });

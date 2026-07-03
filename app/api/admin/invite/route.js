@@ -25,6 +25,7 @@ export async function GET(request) {
       select: {
         id: true,
         email: true,
+        course: true,
         inviteStatus: true,
         createdAt: true,
         name: true,
@@ -34,6 +35,7 @@ export async function GET(request) {
 
     const results = students.map((s) => ({
       email: s.email,
+      course: s.course,
       status: s.inviteStatus,
       name: s.name,
       invitedAt: s.createdAt,
@@ -62,10 +64,10 @@ export async function POST(request) {
 
     const results = [];
 
-    for (const { name, email } of students) {
+    for (const { name, email, course } of students) {
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
-        results.push({ email: existing.email, name: existing.name, status: existing.inviteStatus, password: null, passwordChanged: existing.passwordChanged });
+        results.push({ email: existing.email, name: existing.name, course: existing.course, status: existing.inviteStatus, password: null, passwordChanged: existing.passwordChanged });
         continue;
       }
 
@@ -79,6 +81,7 @@ export async function POST(request) {
           email,
           password: hashed,
           role: "student",
+          course: course || "fullstack",
           inviteStatus: "joined",
           passwordChanged: false,
         },
@@ -87,6 +90,7 @@ export async function POST(request) {
       results.push({
         email: user.email,
         name: user.name,
+        course: user.course,
         status: "joined",
         password,
         passwordChanged: false,

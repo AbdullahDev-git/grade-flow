@@ -8,6 +8,15 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import Toast from "@/components/admin/Toast";
 import ErrorPopover from "@/components/admin/ErrorPopover";
 
+const COURSES = [
+  { value: "fullstack", label: "Full Stack Development" },
+  { value: "wordpress", label: "WordPress Development" },
+  { value: "uiux", label: "UI/UX Design" },
+  { value: "ai-chatbot", label: "AI Chatbot Development" },
+];
+
+const COURSE_LABELS = Object.fromEntries(COURSES.map(c => [c.value, c.label]));
+
 function getAuthHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };
 }
@@ -27,6 +36,7 @@ function loadSavedCredentials() {
 export default function InvitePage() {
   const router = useRouter();
   const [input, setInput] = useState("");
+  const [inviteCourse, setInviteCourse] = useState("fullstack");
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,10 +88,10 @@ export default function InvitePage() {
       .filter(Boolean)
       .map((line) => {
         const commaIdx = line.lastIndexOf(",");
-        if (commaIdx === -1) return { name: "", email: line };
+        if (commaIdx === -1) return { name: "", email: line, course: inviteCourse };
         const name = line.slice(0, commaIdx).trim();
         const email = line.slice(commaIdx + 1).trim();
-        return { name, email };
+        return { name, email, course: inviteCourse };
       });
   };
 
@@ -137,8 +147,8 @@ export default function InvitePage() {
   };
 
   const exportCSV = () => {
-    const header = "Name,Email,Password\n";
-    const rows = credentials.map((c) => `"${c.name}",${c.email},${c.password}`).join("\n");
+    const header = "Name,Email,Password,Course\n";
+    const rows = credentials.map((c) => `"${c.name}",${c.email},${c.password},${COURSE_LABELS[c.course] || c.course || "fullstack"}`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -162,6 +172,15 @@ export default function InvitePage() {
   const columns = [
     { key: "name", label: "Name" },
     { key: "email", label: "Email" },
+    {
+      key: "course",
+      label: "Course",
+      render: (val) => (
+        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+          {COURSE_LABELS[val] || val || "Full Stack"}
+        </span>
+      ),
+    },
     {
       key: "status",
       label: "Status",
@@ -226,6 +245,19 @@ export default function InvitePage() {
         </p>
 
         <div className="mb-3">
+          <label className="block text-sm font-medium text-text-primary mb-1.5">Course</label>
+          <select
+            value={inviteCourse}
+            onChange={(e) => setInviteCourse(e.target.value)}
+            className="w-full sm:w-auto px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white mb-3"
+          >
+            {COURSES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-3">
           <textarea
             rows={5}
             value={input}
@@ -234,7 +266,7 @@ export default function InvitePage() {
             className="w-full resize-none font-mono text-sm"
           />
           <p className="text-xs text-text-secondary mt-1">
-            Enter <strong>Name, email</strong> per line. Passwords are auto-generated.
+            Enter <strong>Name, email</strong> per line. Passwords are auto-generated. All students will be added to <strong>{COURSE_LABELS[inviteCourse]}</strong>.
           </p>
         </div>
 

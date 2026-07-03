@@ -14,6 +14,7 @@ model User {
   email        String       @unique
   password     String
   role           String       @default("student")
+  course         String       @default("fullstack")
   inviteStatus   String       @default("invited")
   passwordChanged Boolean     @default(false)
   createdAt      DateTime     @default(now())
@@ -28,6 +29,7 @@ model Assignment {
   title          String
   description    String
   deadline       DateTime
+  course         String       @default("fullstack")
   requirementsPDF String?
   maxFileSize    Int          @default(10)
   status         String       @default("active")

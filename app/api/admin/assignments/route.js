@@ -27,6 +27,7 @@ export async function GET(request) {
       title: a.title,
       description: a.description,
       deadline: a.deadline,
+      course: a.course,
       status: a.status,
       maxFileSize: a.maxFileSize,
       submissions: a._count.submissions,
@@ -51,10 +52,11 @@ export async function POST(request) {
     const title = formData.get("title");
     const description = formData.get("description");
     const deadline = formData.get("deadline");
+    const course = formData.get("course");
     const maxFileSize = formData.get("maxFileSize");
     const pdfFile = formData.get("requirementsPDF");
 
-    if (!title || !description || !deadline) {
+    if (!title || !description || !deadline || !course) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -71,6 +73,7 @@ export async function POST(request) {
         title,
         description,
         deadline: new Date(deadline),
+        course,
         requirementsPDF,
         maxFileSize: maxFileSize ? parseInt(maxFileSize) : 10,
         createdById: admin.id,
@@ -79,7 +82,7 @@ export async function POST(request) {
 
     await notifyAllStudents({
       title: "New Assignment",
-      message: `"${title}" has been posted. Deadline: ${new Date(deadline).toLocaleDateString()}`,
+      message: `"${title}" has been posted for ${course} course. Deadline: ${new Date(deadline).toLocaleDateString()}`,
       link: "/student/assignments",
     });
 

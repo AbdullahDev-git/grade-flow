@@ -9,10 +9,15 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const student = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { course: true },
+    });
+
     const now = new Date();
 
     const assignments = await prisma.assignment.findMany({
-      where: { status: "active" },
+      where: { status: "active", course: student.course },
       orderBy: { deadline: "asc" },
     });
 
