@@ -37,10 +37,8 @@ export default function AssignmentsPage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/admin/login"); return; }
     fetchAssignments();
-  }, [router]);
+  }, []);
 
   async function fetchAssignments() {
     try {

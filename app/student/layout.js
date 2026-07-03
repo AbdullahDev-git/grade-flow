@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import StudentSidebar from "@/components/student/Sidebar";
 import StudentNavbar from "@/components/student/Navbar";
 
 export default function StudentLayout({ children }) {
-  const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -29,11 +28,17 @@ export default function StudentLayout({ children }) {
           router.push("/login");
           return;
         }
-      } catch {}
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+        return;
+      }
     }
 
     setChecking(false);
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (checking) {
     return (

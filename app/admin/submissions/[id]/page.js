@@ -37,8 +37,6 @@ export default function SubmissionCheckPage({ params }) {
 
   useEffect(() => {
     if (!submissionId) return;
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/admin/login"); return; }
 
     async function fetchSubmission() {
       try {
@@ -65,7 +63,7 @@ export default function SubmissionCheckPage({ params }) {
       }
     }
     fetchSubmission();
-  }, [submissionId, router]);
+  }, [submissionId]);
 
   const handleDownload = async () => {
     if (!submission?.zipFile) return;

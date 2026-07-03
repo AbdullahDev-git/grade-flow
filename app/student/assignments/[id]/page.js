@@ -22,7 +22,6 @@ export default function SubmitAssignmentPage({ params }) {
     async function load() {
       const { id } = await params;
       const token = localStorage.getItem("token");
-      if (!token) { router.push("/login"); return; }
 
       try {
         const res = await fetch("/api/student/assignments", {

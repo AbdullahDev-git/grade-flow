@@ -13,7 +13,6 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
 
     fetch("/api/student/dashboard", {
       headers: { Authorization: `Bearer ${token}` },
@@ -25,7 +24,7 @@ export default function StudentDashboard() {
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [router]);
+  }, []);
 
   const isUrgent = (deadline) => {
     const diff = new Date(deadline) - new Date();

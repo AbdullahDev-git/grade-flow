@@ -1,25 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Sidebar from "@/components/admin/Sidebar";
 import Navbar from "@/components/admin/Navbar";
 
-const publicRoutes = ["/admin", "/admin/login"];
-
 export default function AdminLayout({ children }) {
-  const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (publicRoutes.includes(pathname)) {
-      setChecking(false);
-      return;
-    }
-
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/admin/login");
@@ -36,13 +28,17 @@ export default function AdminLayout({ children }) {
           router.push("/admin/login");
           return;
         }
-      } catch {}
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/admin/login");
+        return;
+      }
     }
 
     setChecking(false);
-  }, [pathname, router]);
-
-  const isPublic = publicRoutes.includes(pathname);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (checking) {
     return (
@@ -50,10 +46,6 @@ export default function AdminLayout({ children }) {
         <Loader2 size={32} className="animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (isPublic) {
-    return <>{children}</>;
   }
 
   const handleToggle = () => {

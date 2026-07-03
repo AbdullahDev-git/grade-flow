@@ -19,10 +19,8 @@ export default function GradesPage() {
   const [studentFilter, setStudentFilter] = useState("all");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/admin/login"); return; }
     fetchData();
-  }, [router]);
+  }, []);
 
   async function fetchData() {
     try {

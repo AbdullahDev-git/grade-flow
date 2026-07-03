@@ -14,14 +14,9 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
-
     async function fetchData() {
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch("/api/admin/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -36,7 +31,7 @@ export default function DashboardPage() {
     }
 
     fetchData();
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (

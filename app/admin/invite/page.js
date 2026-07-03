@@ -37,10 +37,8 @@ export default function InvitePage() {
   const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/admin/login"); return; }
     fetchInvites();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(CREDS_KEY, JSON.stringify(credentials));

@@ -27,7 +27,6 @@ export default function SubmissionsCheckPage() {
   const params = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [grading, setGrading] = useState(null);
   const [gradeForm, setGradeForm] = useState({
@@ -44,7 +43,6 @@ export default function SubmissionsCheckPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) { router.push("/admin/login"); return; }
 
     fetch(`/api/admin/assignments/${params.id}/submissions`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -102,15 +100,6 @@ export default function SubmissionsCheckPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 size={32} className="animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <AlertCircle size={40} className="mx-auto text-accent mb-3" />
-        <p className="text-text-secondary">{error}</p>
       </div>
     );
   }

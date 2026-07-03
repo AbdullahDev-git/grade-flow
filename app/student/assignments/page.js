@@ -22,7 +22,6 @@ export default function StudentAssignments() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
 
     fetch("/api/student/assignments", {
       headers: { Authorization: `Bearer ${token}` },
@@ -34,7 +33,7 @@ export default function StudentAssignments() {
       .then((data) => setAssignments(data.assignments))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [router]);
+  }, []);
 
   const formatDate = (d) => {
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
