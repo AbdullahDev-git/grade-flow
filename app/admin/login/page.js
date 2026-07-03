@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
     } else {
       setChecking(false);
     }
-  }, [router]);
+  }, []);
 
   const showError = (msg) => setError({ visible: true, message: msg });
   const hideError = () => setError({ visible: false, message: "" });

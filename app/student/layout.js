@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import StudentSidebar from "@/components/student/Sidebar";
 import StudentNavbar from "@/components/student/Navbar";
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -38,7 +39,7 @@ export default function StudentLayout({ children }) {
 
     setChecking(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname]);
 
   if (checking) {
     return (

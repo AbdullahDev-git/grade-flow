@@ -1,19 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Sidebar from "@/components/admin/Sidebar";
 import Navbar from "@/components/admin/Navbar";
 
+const PUBLIC_ROUTES = ["/admin/login"];
+
 export default function AdminLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    const isPublic = PUBLIC_ROUTES.includes(pathname);
     const token = localStorage.getItem("token");
+
     if (!token) {
+      if (isPublic) {
+        setChecking(false);
+        return;
+      }
       router.push("/admin/login");
       return;
     }
@@ -25,20 +34,20 @@ export default function AdminLayout({ children }) {
         if (parsed.role !== "admin") {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          router.push("/admin/login");
+          if (!isPublic) router.push("/admin/login");
           return;
         }
       } catch {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        router.push("/admin/login");
+        if (!isPublic) router.push("/admin/login");
         return;
       }
     }
 
     setChecking(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname]);
 
   if (checking) {
     return (
