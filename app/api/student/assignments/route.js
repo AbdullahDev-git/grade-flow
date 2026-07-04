@@ -40,7 +40,10 @@ export async function GET(request) {
       return {
         id: a.id,
         title: a.title,
+        description: a.description,
         deadline: a.deadline,
+        requirementsPDF: a.requirementsPDF,
+        maxFileSize: a.maxFileSize,
         status,
       };
     });

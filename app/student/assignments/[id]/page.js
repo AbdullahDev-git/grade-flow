@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Upload, File, X, Loader2, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Upload, File, X, Loader2, AlertCircle, CheckCircle, Clock, Download, FileText } from "lucide-react";
 import Toast from "@/components/admin/Toast";
 
 export default function SubmitAssignmentPage({ params }) {
@@ -168,6 +168,32 @@ export default function SubmitAssignmentPage({ params }) {
             Due: {formatDeadline(assignment.deadline)}
           </div>
         </div>
+
+        {/* Requirements PDF */}
+        {assignment.requirementsPDF && (
+          <div className="bg-card rounded-xl shadow-sm border border-border p-5 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-primary/10">
+                  <FileText size={20} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Assignment Requirements</p>
+                  <p className="text-xs text-text-secondary">Download the requirements PDF before submitting</p>
+                </div>
+              </div>
+              <a
+                href={assignment.requirementsPDF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Download size={15} />
+                Download PDF
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Upload Zone */}
         <div
