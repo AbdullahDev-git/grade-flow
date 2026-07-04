@@ -30,7 +30,8 @@ model Assignment {
   description    String
   deadline       DateTime
   course         String       @default("fullstack")
-  requirementsPDF String?
+  requirementsPDF     String?
+  requirementsPDFName String?
   maxFileSize    Int          @default(10)
   status         String       @default("active")
   createdById    String

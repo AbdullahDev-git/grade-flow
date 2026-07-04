@@ -43,6 +43,7 @@ export async function GET(request) {
         description: a.description,
         deadline: a.deadline,
         requirementsPDF: a.requirementsPDF,
+        requirementsPDFName: a.requirementsPDFName,
         maxFileSize: a.maxFileSize,
         status,
       };

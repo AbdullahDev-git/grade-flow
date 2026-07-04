@@ -178,7 +178,7 @@ export default function SubmitAssignmentPage({ params }) {
                   <FileText size={20} className="text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-text-primary">Assignment Requirements</p>
+                  <p className="text-sm font-semibold text-text-primary">{assignment.requirementsPDFName || "Assignment Requirements"}</p>
                   <p className="text-xs text-text-secondary">Download the requirements PDF before submitting</p>
                 </div>
               </div>

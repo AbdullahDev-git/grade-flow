@@ -61,9 +61,11 @@ export async function POST(request) {
     }
 
     let requirementsPDF = null;
+    let requirementsPDFName = null;
 
     if (pdfFile && pdfFile.arrayBuffer) {
       const buffer = Buffer.from(await pdfFile.arrayBuffer());
+      requirementsPDFName = pdfFile.name || null;
       const result = await uploadFile(buffer, `requirements-${Date.now()}.pdf`);
       requirementsPDF = result.secure_url;
     }
@@ -75,6 +77,7 @@ export async function POST(request) {
         deadline: new Date(deadline),
         course,
         requirementsPDF,
+        requirementsPDFName,
         maxFileSize: maxFileSize ? parseInt(maxFileSize) : 10,
         createdById: admin.id,
       },
