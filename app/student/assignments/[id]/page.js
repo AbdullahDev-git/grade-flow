@@ -163,6 +163,9 @@ export default function SubmitAssignmentPage({ params }) {
       >
         <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
           <h1 className="text-2xl font-bold text-text-primary mb-2">{assignment.title}</h1>
+          {assignment.description && (
+            <p className="text-sm text-text-secondary mb-3 whitespace-pre-line">{assignment.description}</p>
+          )}
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Clock size={14} />
             Due: {formatDeadline(assignment.deadline)}
