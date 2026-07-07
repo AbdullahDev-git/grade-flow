@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "GradeFlow",
   description: "Assignment Submission & AI Grading System",
+  icons: {
+    icon: "/gradeflow_logo.svg",
+  },
 };
 
 export default function RootLayout({ children }) {
