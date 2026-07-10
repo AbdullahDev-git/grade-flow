@@ -186,7 +186,7 @@ export default function SubmitAssignmentPage({ params }) {
                 </div>
               </div>
               <a
-                href={`${assignment.requirementsPDF}?fl_attachment=true`}
+                href={`${assignment.requirementsPDF}${assignment.requirementsPDF.includes('?') ? '&' : '?'}fl_attachment=true`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
