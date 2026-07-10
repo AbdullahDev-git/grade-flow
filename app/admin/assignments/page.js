@@ -32,6 +32,7 @@ export default function AssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [errPop, setErrPop] = useState({ visible: false, message: "" });
   const [confirm, setConfirm] = useState({ open: false, id: null });
@@ -84,27 +85,43 @@ export default function AssignmentsPage() {
       body.append("maxFileSize", String(form.maxFileSize));
       if (form.requirements) body.append("requirementsPDF", form.requirements);
 
-      const res = await fetch("/api/admin/assignments", {
-        method: "POST",
+      const url = editingId ? `/api/admin/assignments?id=${editingId}` : "/api/admin/assignments";
+
+      const res = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         body,
       });
 
       if (!res.ok) {
         const data = await res.json();
-        showErr(data.error || "Failed to publish");
+        showErr(data.error || "Failed to save");
         return;
       }
 
       setForm({ title: "", description: "", deadline: "", course: "fullstack", maxFileSize: 25, requirements: null });
+      setEditingId(null);
       setShowForm(false);
-      showToast("Assignment published successfully!");
+      showToast(editingId ? "Assignment updated successfully!" : "Assignment published successfully!");
       await fetchAssignments();
     } catch {
       showErr("Something went wrong");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (assignment) => {
+    setForm({
+      title: assignment.title,
+      description: assignment.description,
+      deadline: new Date(assignment.deadline).toISOString().slice(0, 16),
+      course: assignment.course,
+      maxFileSize: assignment.maxFileSize,
+      requirements: null,
+    });
+    setEditingId(assignment.id);
+    setShowForm(true);
   };
 
   const handleDelete = (id) => setConfirm({ open: true, id });
@@ -158,23 +175,26 @@ export default function AssignmentsPage() {
         <StatusBadge status={val.charAt(0).toUpperCase() + val.slice(1)} />
       ),
     },
-    {
-      key: "actions",
-      label: "Actions",
-      render: (_, row) => (
-        <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors">
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(row.id)}
-            className="px-3 py-1.5 text-sm font-medium text-accent hover:bg-red-50 rounded-lg transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      ),
-    },
+{
+        key: "actions",
+        label: "Actions",
+        render: (_, row) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleEdit(row)}
+              className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(row.id)}
+              className="px-3 py-1.5 text-sm font-medium text-accent hover:bg-red-50 rounded-lg transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        ),
+      },
   ];
 
   if (loading) {
@@ -222,7 +242,7 @@ export default function AssignmentsPage() {
             className="overflow-hidden mb-6"
           >
             <div className="bg-card rounded-xl shadow-sm border border-border p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">New Assignment</h2>
+              <h2 className="text-lg font-semibold text-text-primary mb-4">{editingId ? "Edit Assignment" : "New Assignment"}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-text-primary mb-1">Title</label>
@@ -260,7 +280,7 @@ export default function AssignmentsPage() {
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1">Deadline</label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     value={form.deadline}
                     onChange={(e) => setForm({ ...form, deadline: e.target.value })}
                     className="w-full"
@@ -288,7 +308,7 @@ export default function AssignmentsPage() {
               </div>
               <div className="flex gap-3 justify-end pt-4 border-t border-border">
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={() => { setShowForm(false); setEditingId(null); setForm({ title: "", description: "", deadline: "", course: "fullstack", maxFileSize: 25, requirements: null }); }}
                   className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
@@ -298,7 +318,7 @@ export default function AssignmentsPage() {
                   disabled={saving}
                   className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white text-sm font-medium transition-colors disabled:opacity-60"
                 >
-                  {saving ? "Publishing..." : "Publish"}
+                  {saving ? "Saving..." : editingId ? "Update" : "Publish"}
                 </button>
               </div>
             </div>
