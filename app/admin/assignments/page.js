@@ -75,6 +75,12 @@ export default function AssignmentsPage() {
       return;
     }
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showErr("Not authenticated. Please log in again.");
+      return;
+    }
+
     setSaving(true);
     try {
       const body = new FormData();
@@ -89,13 +95,14 @@ export default function AssignmentsPage() {
 
       const res = await fetch(url, {
         method: editingId ? "PUT" : "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${token}` },
         body,
       });
 
       if (!res.ok) {
         const data = await res.json();
-        showErr(data.error || "Failed to save");
+        console.error("Save failed:", res.status, data);
+        showErr(data.error || `Failed to save (${res.status})`);
         return;
       }
 
