@@ -7,7 +7,7 @@ import { ArrowLeft, Upload, File, X, Loader2, AlertCircle, CheckCircle, Clock, D
 import Toast from "@/components/admin/Toast";
 
 export default function SubmitAssignmentPage({ params }) {
-  const router = useRouter();
+  const token = localStorage.getItem("token");
   const [assignment, setAssignment] = useState(null);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -186,7 +186,7 @@ export default function SubmitAssignmentPage({ params }) {
                 </div>
               </div>
               <a
-                href={`/api/download?url=${encodeURIComponent(assignment.requirementsPDF)}&filename=${encodeURIComponent(assignment.requirementsPDFName || "requirements.pdf")}`}
+                href={`/api/download?url=${encodeURIComponent(assignment.requirementsPDF)}&filename=${encodeURIComponent(assignment.requirementsPDFName || "requirements.pdf")}&token=${encodeURIComponent(token || "")}`}
                 className="flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <Download size={15} />
