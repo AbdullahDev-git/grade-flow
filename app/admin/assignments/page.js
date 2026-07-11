@@ -149,12 +149,28 @@ export default function AssignmentsPage() {
     }
   };
 
+  const handleToggleStatus = async (assignment) => {
+    const newStatus = assignment.status === "active" ? "closed" : "active";
+    try {
+      const res = await fetch(`/api/admin/assignments?id=${assignment.id}`, {
+        method: "PATCH",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error();
+      setAssignments(assignments.map((a) => (a.id === assignment.id ? { ...a, status: newStatus } : a)));
+      showToast(`Assignment ${newStatus}`);
+    } catch {
+      showErr("Failed to update status");
+    }
+  };
+
   const formatDeadline = (d) => {
     const date = new Date(d);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const columns = [
+const columns = [
     { key: "title", label: "Title" },
     {
       key: "course",
@@ -182,26 +198,36 @@ export default function AssignmentsPage() {
         <StatusBadge status={val.charAt(0).toUpperCase() + val.slice(1)} />
       ),
     },
-{
-        key: "actions",
-        label: "Actions",
-        render: (_, row) => (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleEdit(row)}
-              className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(row.id)}
-              className="px-3 py-1.5 text-sm font-medium text-accent hover:bg-red-50 rounded-lg transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        ),
-      },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, row) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleEdit(row)}
+            className="px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => handleToggleStatus(row)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              row.status === "active"
+                ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                : "bg-green-50 text-green-700 hover:bg-green-100"
+            }`}
+          >
+            {row.status === "active" ? "Close" : "Reopen"}
+          </button>
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="px-3 py-1.5 text-sm font-medium text-accent hover:bg-red-50 rounded-lg transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      ),
+    },
   ];
 
   if (loading) {
