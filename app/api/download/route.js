@@ -9,7 +9,7 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
-  const filename = searchParams.get("filename") || "download.zip";
+  const filename = searchParams.get("filename") || "download";
 
   if (!url) {
     return NextResponse.json({ error: "URL required" }, { status: 400 });
@@ -22,9 +22,11 @@ export async function GET(request) {
     }
     const buffer = Buffer.from(await res.arrayBuffer());
 
+    const contentType = filename.endsWith(".pdf") ? "application/pdf" : "application/zip";
+
     return new NextResponse(buffer, {
       headers: {
-        "Content-Type": "application/zip",
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": buffer.length.toString(),
       },

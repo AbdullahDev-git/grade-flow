@@ -157,6 +157,42 @@ export async function PUT(request) {
   }
 }
 
+export async function PATCH(request) {
+  try {
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const { status } = await request.json();
+
+    if (!id || !status) {
+      return NextResponse.json({ error: "Assignment ID and status required" }, { status: 400 });
+    }
+
+    if (!["active", "closed"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    const existing = await prisma.assignment.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    }
+
+    const assignment = await prisma.assignment.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({ assignment });
+  } catch (error) {
+    console.error("Admin assignments PATCH error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(request) {
   try {
     const admin = await verifyAdmin(request);
@@ -166,6 +202,7 @@ export async function DELETE(request) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const force = searchParams.get("force") === "true";
 
     if (!id) {
       return NextResponse.json({ error: "Assignment ID required" }, { status: 400 });
@@ -176,9 +213,17 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
     }
 
-    await prisma.grade.deleteMany({
-      where: { submission: { assignmentId: id } },
-    });
+    if (!force) {
+      const submissionsCount = await prisma.submission.count({ where: { assignmentId: id } });
+      if (submissionsCount > 0) {
+        return NextResponse.json({
+          error: "Assignment has submissions. Use status='closed' to hide from students, or force=true to delete all data.",
+          submissionsCount,
+        }, { status: 400 });
+      }
+    }
+
+    await prisma.grade.deleteMany({ where: { submission: { assignmentId: id } } });
     await prisma.submission.deleteMany({ where: { assignmentId: id } });
     await prisma.assignment.delete({ where: { id } });
 
