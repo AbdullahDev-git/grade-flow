@@ -53,7 +53,14 @@ export default function StudentDashboard() {
     const urgent = isUrgent(d);
     return (
       <span className={urgent ? "text-accent font-medium" : "text-text-secondary"}>
-        {date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        {date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })}
         {urgent && <span className="ml-1.5 inline-flex items-center gap-1 text-xs text-accent">• Due soon</span>}
       </span>
     );

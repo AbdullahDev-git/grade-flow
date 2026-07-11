@@ -36,7 +36,14 @@ export default function StudentAssignments() {
   }, []);
 
   const formatDate = (d) => {
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(d).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   const isUrgent = (deadline) => {
