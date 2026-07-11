@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, File, X, Loader2, AlertCircle, CheckCircle, Clock, D
 import Toast from "@/components/admin/Toast";
 
 export default function SubmitAssignmentPage({ params }) {
+  const router = useRouter();
   const token = localStorage.getItem("token");
   const [assignment, setAssignment] = useState(null);
   const [file, setFile] = useState(null);
@@ -30,6 +31,11 @@ export default function SubmitAssignmentPage({ params }) {
         if (!res.ok) throw new Error("Unauthorized");
         const data = await res.json();
         const found = data.assignments.find((a) => a.id === id);
+        if (!found) {
+          setError("Assignment not found or no longer available");
+          setLoading(false);
+          return;
+        }
         setAssignment(found);
       } catch {
         router.push("/login");
