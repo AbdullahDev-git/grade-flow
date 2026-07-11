@@ -74,7 +74,7 @@ export async function POST(request) {
       data: {
         title,
         description,
-        deadline: new Date(deadline),
+        deadline: new Date(deadline + "+05:00"),
         course,
         requirementsPDF,
         requirementsPDFName,
@@ -142,7 +142,7 @@ export async function PUT(request) {
       data: {
         title,
         description,
-        deadline: new Date(deadline),
+        deadline: new Date(deadline + "+05:00"),
         course,
         requirementsPDF,
         requirementsPDFName,
