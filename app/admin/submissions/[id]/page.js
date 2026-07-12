@@ -17,15 +17,10 @@ export default function SubmissionCheckPage({ params }) {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [gradeResult, setGradeResult] = useState(null);
+  const [criteria, setCriteria] = useState({});
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [savingGrade, setSavingGrade] = useState(false);
-  const [gradeForm, setGradeForm] = useState({
-    codeQuality: 0,
-    structure: 0,
-    requirementsMet: 0,
-    bestPractices: 0,
-    noErrors: 0,
-  });
+  const [gradeForm, setGradeForm] = useState({});
 
   useEffect(() => {
     async function resolveParams() {
@@ -46,15 +41,20 @@ export default function SubmissionCheckPage({ params }) {
         if (!res.ok) throw new Error("Failed to load submission");
         const json = await res.json();
         setSubmission(json.submission);
+        setCriteria(json.criteria || {});
         if (json.grade) {
           setGradeResult(json.grade);
-          setGradeForm({
-            codeQuality: json.grade.codeQuality ?? 0,
-            structure: json.grade.structure ?? 0,
-            requirementsMet: json.grade.requirementsMet ?? 0,
-            bestPractices: json.grade.bestPractices ?? 0,
-            noErrors: json.grade.noErrors ?? 0,
+          const initialForm = {};
+          Object.keys(json.criteria).forEach(key => {
+            initialForm[key] = json.grade.scores?.[key] ?? 0;
           });
+          setGradeForm(initialForm);
+        } else {
+          const initialForm = {};
+          Object.keys(json.criteria).forEach(key => {
+            initialForm[key] = 0;
+          });
+          setGradeForm(initialForm);
         }
       } catch (err) {
         setError(err.message);
@@ -88,24 +88,24 @@ export default function SubmissionCheckPage({ params }) {
   };
 
   const openGradeModal = () => {
-    if (!gradeResult) {
-      setGradeForm({ codeQuality: 0, structure: 0, requirementsMet: 0, bestPractices: 0, noErrors: 0 });
+    if (!gradeResult && Object.keys(criteria).length > 0) {
+      const initialForm = {};
+      Object.keys(criteria).forEach(key => {
+        initialForm[key] = 0;
+      });
+      setGradeForm(initialForm);
     }
     setShowGradeModal(true);
   };
 
   const handleGradeChange = (field, value) => {
-    const num = Math.min(Math.max(0, parseInt(value) || 0), getMaxForField(field));
+    const max = criteria[field]?.weight || 0;
+    const num = Math.min(Math.max(0, parseInt(value) || 0), max);
     setGradeForm((prev) => ({ ...prev, [field]: num }));
   };
 
-  const getMaxForField = (field) => {
-    const maxes = { codeQuality: 25, structure: 20, requirementsMet: 30, bestPractices: 15, noErrors: 10 };
-    return maxes[field] || 0;
-  };
-
   const totalFromForm = () => {
-    return gradeForm.codeQuality + gradeForm.structure + gradeForm.requirementsMet + gradeForm.bestPractices + gradeForm.noErrors;
+    return Object.values(gradeForm).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
   };
 
   const handleSaveGrade = async () => {
@@ -117,7 +117,7 @@ export default function SubmissionCheckPage({ params }) {
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           totalScore: total,
-          categoryScores: gradeForm,
+          scores: gradeForm,
         }),
       });
       if (!res.ok) throw new Error("Failed to save grade");
@@ -142,14 +142,15 @@ export default function SubmissionCheckPage({ params }) {
     });
   };
 
-  const breakdown = gradeResult
-    ? [
-        { label: "Code Quality", score: gradeResult.codeQuality ?? 0, max: 25 },
-        { label: "Structure & Logic", score: gradeResult.structure ?? 0, max: 20 },
-        { label: "Requirements Met", score: gradeResult.requirementsMet ?? 0, max: 30 },
-        { label: "Best Practices", score: gradeResult.bestPractices ?? 0, max: 15 },
-        { label: "No Errors / Bugs", score: gradeResult.noErrors ?? 0, max: 10 },
-      ]
+  const totalScore = gradeResult?.totalScore ?? 0;
+  const gradeLetter = totalScore >= 90 ? "A+" : totalScore >= 80 ? "A" : totalScore >= 70 ? "B" : totalScore >= 60 ? "C" : "D";
+
+  const breakdown = gradeResult && gradeResult.scores
+    ? Object.entries(gradeResult.scores).map(([key, score]) => ({
+        label: criteria[key]?.label || key,
+        score,
+        max: criteria[key]?.weight || 0,
+      }))
     : [];
 
   if (loading) {
@@ -168,17 +169,6 @@ export default function SubmissionCheckPage({ params }) {
       </div>
     );
   }
-
-  const totalScore = gradeResult?.totalScore ?? 0;
-  const gradeLetter = totalScore >= 90 ? "A+" : totalScore >= 80 ? "A" : totalScore >= 70 ? "B" : totalScore >= 60 ? "C" : "D";
-
-  const gradeFields = [
-    { key: "codeQuality", label: "Code Quality", max: 25 },
-    { key: "structure", label: "Structure & Logic", max: 20 },
-    { key: "requirementsMet", label: "Requirements Met", max: 30 },
-    { key: "bestPractices", label: "Best Practices", max: 15 },
-    { key: "noErrors", label: "No Errors / Bugs", max: 10 },
-  ];
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -273,27 +263,31 @@ export default function SubmissionCheckPage({ params }) {
                 </div>
 
                 <div className="space-y-3">
-                  {breakdown.map((item) => {
-                    const pct = item.max > 0 ? Math.round((item.score / item.max) * 100) : 0;
-                    return (
-                      <div key={item.label}>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-text-secondary">{item.label}</span>
-                          <span className="font-medium text-text-primary">{item.score}/{item.max}</span>
+                  {breakdown.length > 0 ? (
+                    breakdown.map((item) => {
+                      const pct = item.max > 0 ? Math.round((item.score / item.max) * 100) : 0;
+                      return (
+                        <div key={item.label}>
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-text-secondary">{item.label}</span>
+                            <span className="font-medium text-text-primary">{item.score}/{item.max}</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 1, delay: 0.3 }}
+                              className={`h-full rounded-full ${
+                                pct >= 90 ? "bg-success" : pct >= 70 ? "bg-primary" : "bg-warning"
+                              }`}
+                            />
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 1, delay: 0.3 }}
-                            className={`h-full rounded-full ${
-                              pct >= 90 ? "bg-success" : pct >= 70 ? "bg-primary" : "bg-warning"
-                            }`}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-text-secondary text-center py-4">No grade breakdown available</p>
+                  )}
                 </div>
               </>
             )}
@@ -319,12 +313,14 @@ export default function SubmissionCheckPage({ params }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowGradeModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-xl shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-5 border-b border-border">
                 <h2 className="text-lg font-semibold text-text-primary">Grade Submission</h2>
@@ -338,18 +334,18 @@ export default function SubmissionCheckPage({ params }) {
                   Enter marks for <strong>{submission?.student?.name || "Unknown"}</strong>
                 </div>
 
-                {gradeFields.map((field) => (
-                  <div key={field.key}>
+                {Object.entries(criteria).map(([key, metric]) => (
+                  <div key={key}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <label className="font-medium text-text-primary">{field.label}</label>
-                      <span className="text-text-secondary">/ {field.max}</span>
+                      <label className="font-medium text-text-primary">{metric.label}</label>
+                      <span className="text-text-secondary">/ {metric.weight}</span>
                     </div>
                     <input
                       type="number"
                       min={0}
-                      max={field.max}
-                      value={gradeForm[field.key]}
-                      onChange={(e) => handleGradeChange(field.key, e.target.value)}
+                      max={metric.weight}
+                      value={gradeForm[key] ?? 0}
+                      onChange={(e) => handleGradeChange(key, e.target.value)}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>

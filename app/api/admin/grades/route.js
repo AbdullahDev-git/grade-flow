@@ -23,9 +23,10 @@ export async function GET(request) {
         submission: {
           include: {
             student: { select: { id: true, name: true, email: true } },
-            assignment: { select: { id: true, title: true } },
+            assignment: { select: { id: true, title: true, course: true } },
           },
         },
+        criteria: { select: { metrics: true } },
       },
       where: assignmentId || studentId ? { submission: where } : undefined,
     });
@@ -36,7 +37,10 @@ export async function GET(request) {
       studentEmail: g.submission?.student?.email ?? "Unknown",
       assignmentTitle: g.submission?.assignment?.title ?? "Unknown",
       assignmentId: g.submission?.assignment?.id ?? null,
+      course: g.submission?.assignment?.course ?? "fullstack",
       score: g.totalScore,
+      scores: g.scores || {},
+      criteria: g.criteria?.metrics || {},
       gradedAt: g.gradedAt,
     }));
 

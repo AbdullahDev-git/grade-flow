@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
       where: { id },
       include: {
         student: { select: { id: true, name: true, email: true } },
-        assignment: { select: { id: true, title: true } },
+        assignment: { select: { id: true, title: true, course: true } },
         grade: true,
       },
     });
@@ -23,6 +23,10 @@ export async function GET(request, { params }) {
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
+
+    const criteria = await prisma.gradingCriteria.findUnique({
+      where: { course: submission.assignment.course },
+    });
 
     return NextResponse.json({
       submission: {
@@ -34,6 +38,7 @@ export async function GET(request, { params }) {
         assignment: submission.assignment,
       },
       grade: submission.grade,
+      criteria: criteria?.metrics || {},
     });
   } catch (error) {
     console.error("Grade GET error:", error);
@@ -52,28 +57,30 @@ export async function POST(request, { params }) {
 
     const submission = await prisma.submission.findUnique({
       where: { id },
+      include: { assignment: true },
     });
 
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
 
-    const { totalScore, categoryScores } = await request.json();
+    const { totalScore, scores } = await request.json();
 
-    const existingGrade = await prisma.grade.findUnique({
-      where: { submissionId: id },
+    const criteria = await prisma.gradingCriteria.findUnique({
+      where: { course: submission.assignment.course },
     });
 
     const gradeData = {
       totalScore: totalScore ?? 0,
-      codeQuality: categoryScores?.codeQuality ?? 0,
-      structure: categoryScores?.structure ?? 0,
-      requirementsMet: categoryScores?.requirementsMet ?? 0,
-      bestPractices: categoryScores?.bestPractices ?? 0,
-      noErrors: categoryScores?.noErrors ?? 0,
+      scores: scores || {},
+      criteriaId: criteria?.id,
     };
 
     let grade;
+    const existingGrade = await prisma.grade.findUnique({
+      where: { submissionId: id },
+    });
+
     if (existingGrade) {
       grade = await prisma.grade.update({
         where: { submissionId: id },

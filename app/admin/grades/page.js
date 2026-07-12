@@ -2,11 +2,40 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Trophy, Clock, Download, Loader2, AlertCircle } from "lucide-react";
+import { Trophy, Clock, Download, Loader2, AlertCircle, ChevronRight, Plus } from "lucide-react";
 import DataTable from "@/components/admin/DataTable";
 
 function getAuthHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };
+}
+
+function formatDate(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function renderScoreBreakdown(grade) {
+  if (!grade.scores || Object.keys(grade.scores).length === 0) {
+    return <span className="font-semibold text-text-primary">{grade.score != null ? `${grade.score}/100` : "—"}</span>;
+  }
+  const criteria = grade.criteria || {};
+  return (
+    <div className="space-y-1">
+      <div className="font-semibold text-text-primary">{grade.score != null ? `${grade.score}/100` : "—"}</div>
+      <div className="flex flex-wrap gap-1.5">
+        {Object.entries(grade.scores).map(([key, score]) => {
+          const metric = criteria[key];
+          const label = metric?.label || key;
+          const max = metric?.weight || 0;
+          return (
+            <span key={key} className="text-xs px-2 py-0.5 bg-gray-100 rounded text-text-secondary hover:bg-gray-200 cursor-default" title={`${label}: ${score}/${max}`}>
+              {label}: {score}/{max}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function GradesPage() {
@@ -88,22 +117,18 @@ export default function GradesPage() {
 
   const topPerformers = numericScores.filter((s) => s >= 80).length;
 
-  const formatDate = (d) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  };
-
   const columns = [
     { key: "studentName", label: "Student Name" },
     { key: "assignmentTitle", label: "Assignment" },
     {
       key: "score",
       label: "Score",
-      render: (val) => (
-        <span className="font-semibold text-text-primary">
-          {val != null ? `${val}/100` : "—"}
-        </span>
-      ),
+      render: (val, row) => renderScoreBreakdown(row),
+    },
+    {
+      key: "course",
+      label: "Course",
+      render: (val) => <span className="text-sm px-2 py-0.5 bg-gray-100 rounded text-text-secondary capitalize">{val}</span>,
     },
     {
       key: "gradedAt",
@@ -113,8 +138,11 @@ export default function GradesPage() {
     {
       key: "actions",
       label: "Actions",
-      render: () => (
-        <button className="text-primary hover:text-primary-dark text-sm font-medium transition-colors">
+      render: (val, row) => (
+        <button
+          onClick={() => router.push(`/admin/submissions/${row.submissionId}`)}
+          className="text-primary hover:text-primary-dark text-sm font-medium transition-colors"
+        >
           View Details
         </button>
       ),
