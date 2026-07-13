@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, AlertCircle, Clock, CheckCircle, XCircle, FileText } from "lucide-react";
+import { Loader2, AlertCircle, Clock, CheckCircle, XCircle, FileText, Edit3 } from "lucide-react";
 import StatusBadge from "@/components/admin/StatusBadge";
 
 function getStudentBadge(status) {
@@ -182,10 +182,20 @@ export default function StudentAssignments() {
                       {a.status === "overdue" ? (
                         <span className="text-sm text-text-secondary">Closed</span>
                       ) : a.status === "submitted" ? (
-                        <span className="inline-flex items-center gap-1 text-sm text-success font-medium">
-                          <CheckCircle size={14} />
-                          Submitted
-                        </span>
+                        new Date(a.deadline) < new Date() ? (
+                          <span className="inline-flex items-center gap-1 text-sm text-success font-medium">
+                            <CheckCircle size={14} />
+                            Submitted
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => router.push(`/student/assignments/${a.id}`)}
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+                          >
+                            <Edit3 size={14} />
+                            Edit
+                          </button>
+                        )
                       ) : (
                         <button
                           onClick={() => router.push(`/student/assignments/${a.id}`)}
